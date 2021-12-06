@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.util.ResourceLeakDetector;
+import iot.technology.mqtt.server.protocol.ProtocolProcess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 
 /**
  * @author mushuwei
@@ -39,6 +41,9 @@ public class MqttServer {
 	private Integer workerGroupThreadCount;
 	@Value("${mqtt.netty.max_payload_size}")
 	private Integer maxPayloadSize;
+
+	@Resource
+	private ProtocolProcess protocolProcess;
 
 	private Channel serverChannel;
 	private EventLoopGroup bossGroup;
@@ -63,7 +68,7 @@ public class MqttServer {
 						ChannelPipeline pipeline = socketChannel.pipeline();
 						pipeline.addLast("decoder", new MqttDecoder(maxPayloadSize));
 						pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-						MqttTransportHandler handler = new MqttTransportHandler();
+						MqttTransportHandler handler = new MqttTransportHandler(protocolProcess);
 						pipeline.addLast(handler);
 					}
 				});
