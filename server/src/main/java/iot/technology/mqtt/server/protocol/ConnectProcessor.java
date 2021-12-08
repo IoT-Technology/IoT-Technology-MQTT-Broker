@@ -3,8 +3,11 @@ package iot.technology.mqtt.server.protocol;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.util.AttributeKey;
+import iot.technology.mqtt.server.MqttSystemContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
 
 /**
  * @author mushuwei
@@ -12,6 +15,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service("connectProcessor")
 public class ConnectProcessor implements AbstractProtocolProcessor {
+
+	@Resource
+	private MqttSystemContext systemContext;
 
 	@Override
 	public void processMqttProtocol(Channel channel, MqttMessage msg) {
