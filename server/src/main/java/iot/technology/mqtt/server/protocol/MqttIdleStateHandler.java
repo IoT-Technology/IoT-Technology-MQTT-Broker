@@ -14,14 +14,16 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class MqttIdleStateHandler extends IdleStateHandler {
 
-	public MqttIdleStateHandler(int idle_time) {
-		super(idle_time, 0, 0, TimeUnit.SECONDS);
+	private static final int IDLE_TIME = 15;
+
+	public MqttIdleStateHandler() {
+		super(IDLE_TIME, 0, 0, TimeUnit.SECONDS);
 	}
 
 	@Override
 	protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
 		String idle_time = (String) ctx.channel().attr(AttributeKey.valueOf("idle_time")).get();
-		log.info(idle_time + "秒内未读到数据，关闭连接");
+		log.info(IDLE_TIME + "秒内未读到数据，关闭连接");
 		ctx.channel().close();
 	}
 }
