@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.util.ResourceLeakDetector;
+import iot.technology.mqtt.server.protocol.MqttIdleStateHandler;
 import iot.technology.mqtt.server.protocol.ProtocolProcess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,6 +67,7 @@ public class MqttServer {
 					@Override
 					protected void initChannel(SocketChannel socketChannel) throws Exception {
 						ChannelPipeline pipeline = socketChannel.pipeline();
+						pipeline.addLast("idle", new MqttIdleStateHandler());
 						pipeline.addLast("decoder", new MqttDecoder(maxPayloadSize));
 						pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 						MqttTransportHandler handler = new MqttTransportHandler(protocolProcess);

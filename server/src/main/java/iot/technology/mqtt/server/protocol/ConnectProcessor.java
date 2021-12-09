@@ -46,23 +46,7 @@ public class ConnectProcessor implements AbstractProtocolProcessor {
 		String clientId = mqttConnectPayload.clientIdentifier();
 		//将clientId 存储到channel的map中
 		channel.attr(AttributeKey.valueOf("clientId")).set(clientId);
-
-		/**
-		 * 处理保持连接Keep Alive
-		 * https://iot.mushuwei.cn/#/mqtt3/mqtt-connect-0301?id=%e4%bf%9d%e6%8c%81%e8%bf%9e%e6%8e%a5-keep-alive
-		 */
-		if (connectVariableHeader.keepAliveTimeSeconds() > 0) {
-			if (channel.pipeline().names().contains("idle")) {
-				channel.pipeline().remove("idle");
-			}
-			int idle_time = Math.round(connectVariableHeader.keepAliveTimeSeconds() * 1.5f);
-			channel.pipeline()
-					.addFirst("idle", new MqttIdleStateHandler(idle_time));
-			//将idle_time 存储到channel的map中
-			channel.attr(AttributeKey.valueOf("idle_time")).set(String.valueOf(idle_time));
-		}
-
-
+		
 		MqttConnAckMessage okResp =
 				createMqttConnAckMessage(MqttConnectReturnCode.CONNECTION_ACCEPTED);
 		channel.writeAndFlush(okResp);
