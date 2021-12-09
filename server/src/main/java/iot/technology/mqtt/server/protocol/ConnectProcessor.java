@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.util.AttributeKey;
 import iot.technology.mqtt.server.MqttSystemContext;
+import iot.technology.mqtt.storage.session.domain.SessionStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,17 @@ public class ConnectProcessor implements AbstractProtocolProcessor {
 		String clientId = mqttConnectPayload.clientIdentifier();
 		//将clientId 存储到channel的map中
 		channel.attr(AttributeKey.valueOf("clientId")).set(clientId);
-		
+
+		// 如果会话中已存储这个新连接的clientId, 就关闭之前该clientId的连接
+		if (systemContext.getSessionStoreService().containsKey(clientId)) {
+			SessionStore sessionStore = systemContext.getSessionStoreService().get(clientId);
+			Channel previous = sessionStore.getChannel();
+			previous.close();
+		}
+
+		SessionStore sessionStore = new SessionStore().setClientId(clientId).setChannel(channel);
+		systemContext.getSessionStoreService().put(clientId, sessionStore);
+
 		MqttConnAckMessage okResp =
 				createMqttConnAckMessage(MqttConnectReturnCode.CONNECTION_ACCEPTED);
 		channel.writeAndFlush(okResp);
