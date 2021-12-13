@@ -10,3 +10,11 @@ mqtt:
     boss_group_thread_count: 1
     worker_group_thread_count: 8
     max_payload_size: 65536
+
+
+spring:
+  application:
+    name: IoT-Technology-MQTT-Broker
+  redis:
+    redisson:
+      file: classpath:redisson.yml
