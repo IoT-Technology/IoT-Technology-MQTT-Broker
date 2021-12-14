@@ -1,13 +1,13 @@
 package iot.technology.mqtt.storage.session.cache;
 
-import org.redisson.api.RBucket;
-import org.redisson.api.RKeys;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,7 +20,7 @@ public class RedissonClientService implements CacheManager {
 	private RedissonClient redissonClient;
 
 	@Override
-	public Boolean delete(String key) {
+	public Boolean deleteStringCache(String key) {
 		RKeys keys = redissonClient.getKeys();
 		keys.delete(key);
 		return Boolean.TRUE;
@@ -28,7 +28,7 @@ public class RedissonClientService implements CacheManager {
 
 
 	@Override
-	public Boolean put(String key, Object value, Integer expireTime) {
+	public Boolean putStringCache(String key, Object value, Integer expireTime) {
 		RBucket<Object> bucket = redissonClient.getBucket(key);
 		int cacheTime = (Objects.nonNull(expireTime) && expireTime > 0) ? expireTime : 300;
 		bucket.set(value, cacheTime, TimeUnit.SECONDS);
@@ -36,13 +36,13 @@ public class RedissonClientService implements CacheManager {
 	}
 
 	@Override
-	public Object get(String key) {
+	public Object getStringCache(String key) {
 		RBucket<Object> bucket = redissonClient.getBucket(key);
 		return bucket.get();
 	}
 
 	@Override
-	public Boolean existsKey(String key) {
+	public Boolean existsStringCache(String key) {
 		RKeys keys = redissonClient.getKeys();
 		Boolean result = keys.countExists(key) > 0 ? Boolean.TRUE : Boolean.FALSE;
 		return result;
@@ -50,15 +50,54 @@ public class RedissonClientService implements CacheManager {
 
 
 	@Override
-	public Object getMap(String key, String mapKey) {
-		RMap<String, Object> map = redissonClient.getMap(key);
-		return map.get(mapKey);
+	public Object getHashCache(String key, String mapKey) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		return cache.get(mapKey);
 	}
 
 	@Override
-	public Boolean putMap(String key, String mapKey, Object mapValue) {
-		RMap<String, Object> map = redissonClient.getMap(key);
-		map.put(mapKey, mapValue);
+	public Boolean putHashCache(String key, String mapKey, Object mapValue) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		cache.putIfAbsent(mapKey, mapValue);
 		return Boolean.TRUE;
+	}
+
+	@Override
+	public Boolean putAllHashCache(String key, Map<String, Object> maps) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		cache.putAll(maps);
+		return Boolean.TRUE;
+	}
+
+	@Override
+	public Map<String, Object> getAllHashCache(String key) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		Map<String, Object> hashMap = cache.readAllMap();
+		return hashMap;
+	}
+
+	@Override
+	public Boolean addSetCache(String key, Object value) {
+		RSet<Object> cache = redissonClient.getSet(key);
+		cache.add(value);
+		return Boolean.TRUE;
+	}
+
+	@Override
+	public Boolean addAllSetCache(String key, List<Object> values) {
+		RSet<Object> cache = redissonClient.getSet(key);
+		return cache.addAll(values);
+	}
+
+	@Override
+	public Boolean existsSetCache(String key, Object value) {
+		RSet<Object> cache = redissonClient.getSet(key);
+		return cache.contains(value);
+	}
+
+	@Override
+	public Set<Object> getAllSetCache(String key) {
+		RSet<Object> cache = redissonClient.getSet(key);
+		return cache.readAll();
 	}
 }
