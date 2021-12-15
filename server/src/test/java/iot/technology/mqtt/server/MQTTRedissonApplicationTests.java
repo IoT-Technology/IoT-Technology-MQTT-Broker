@@ -1,7 +1,7 @@
 package iot.technology.mqtt.server;
 
 import iot.technology.mqtt.server.domain.Book;
-import iot.technology.mqtt.storage.session.cache.CacheManager;
+import iot.technology.mqtt.storage.cache.CacheManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

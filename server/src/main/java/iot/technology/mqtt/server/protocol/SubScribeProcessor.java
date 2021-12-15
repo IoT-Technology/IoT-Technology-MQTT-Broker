@@ -3,10 +3,13 @@ package iot.technology.mqtt.server.protocol;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.util.AttributeKey;
+import iot.technology.mqtt.server.MqttSystemContext;
+import iot.technology.mqtt.storage.subscribe.domain.SubscribeStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +20,9 @@ import java.util.List;
 @Service("subscribeProcessor")
 public class SubScribeProcessor implements AbstractProtocolProcessor {
 
+	@Resource(name = "mqttSystemContext")
+	private MqttSystemContext mqttSystemContext;
+
 	@Override
 	public void processMqttProtocol(Channel channel, MqttMessage msg) {
 		MqttSubscribeMessage mqttSubMessage = (MqttSubscribeMessage) msg;
@@ -25,10 +31,13 @@ public class SubScribeProcessor implements AbstractProtocolProcessor {
 			String clientId = (String) channel.attr(AttributeKey.valueOf("clientId")).get();
 			List<Integer> mqttQoSList = new ArrayList<Integer>();
 			for (MqttTopicSubscription mqttTopicSubscription : topicSubscriptions) {
-				String topicFilter = mqttTopicSubscription.topicName();
+				String topicName = mqttTopicSubscription.topicName();
 				MqttQoS mqttQoS = mqttTopicSubscription.qualityOfService();
 				mqttQoSList.add(mqttQoS.value());
 
+				SubscribeStore subscribeStore =
+						new SubscribeStore().setTopicName(topicName).setClientId(clientId).setMqttQoS(mqttQoS.value());
+				mqttSystemContext.getSubscribeStoreService().put(topicName, subscribeStore);
 			}
 			MqttSubAckMessage subAckMessage = (MqttSubAckMessage) MqttMessageFactory.newMessage(
 					new MqttFixedHeader(MqttMessageType.SUBACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
@@ -36,6 +45,8 @@ public class SubScribeProcessor implements AbstractProtocolProcessor {
 					new MqttSubAckPayload(mqttQoSList));
 			channel.writeAndFlush(subAckMessage);
 			log.info("SUBSCRIBE - clientId: {}, topicSubscriptions: {}", clientId, topicSubscriptions);
+		} else {
+			channel.close();
 		}
 	}
 
