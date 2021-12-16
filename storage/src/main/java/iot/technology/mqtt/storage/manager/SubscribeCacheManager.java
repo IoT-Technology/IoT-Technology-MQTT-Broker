@@ -51,7 +51,7 @@ public class SubscribeCacheManager {
 
 	public Map<String, SubscribeStore> getSubscribeStoreMapByTopic(String topic) {
 		Map<String, SubscribeStore> resultMap = new HashMap<>();
-		Map<String, Object> cacheMap = cacheManager.getAllHashCache(topic);
+		Map<String, Object> cacheMap = cacheManager.getAllHashCache(SUBSRIBE_PRE + topic);
 		for (Map.Entry<String, Object> entry : cacheMap.entrySet()) {
 			resultMap.put(entry.getKey(), (SubscribeStore) entry.getValue());
 		}
