@@ -1,5 +1,5 @@
 <!--
-    Copyright © 2021 IOT Technical Guide - The MQTT broker brokerAuthors
+    Copyright © 2021 IOT Technical Guide - The MQTT broker Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <docker.image.prefix>iot-technology</docker.image.prefix>
         <lombok.version>1.18.18</lombok.version>
         <mapstruct.version>1.3.1.Final</mapstruct.version>
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
