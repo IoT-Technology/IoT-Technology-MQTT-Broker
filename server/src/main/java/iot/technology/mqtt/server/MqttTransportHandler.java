@@ -4,8 +4,6 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.mqtt.MqttMessage;
-import iot.technology.mqtt.server.protocol.ProtocolProcess;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -15,14 +13,17 @@ import java.io.IOException;
  */
 @Slf4j
 @ChannelHandler.Sharable
-@AllArgsConstructor
 public class MqttTransportHandler extends SimpleChannelInboundHandler<MqttMessage> {
 
-	private ProtocolProcess protocolProcess;
+	private final MqttTransportContext transportContext;
+
+	public MqttTransportHandler(MqttTransportContext transportContext) {
+		this.transportContext = transportContext;
+	}
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
-		protocolProcess.process(ctx, msg);
+		transportContext.getProtocolProcess().process(ctx, msg);
 	}
 
 	@Override

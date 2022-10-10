@@ -1,21 +1,13 @@
 package iot.technology.mqtt.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.mqtt.MqttDecoder;
-import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.util.ResourceLeakDetector;
-import iot.technology.mqtt.server.protocol.MqttIdleStateHandler;
-import iot.technology.mqtt.server.protocol.ProtocolProcess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -26,13 +18,22 @@ import javax.annotation.Resource;
  * @author mushuwei
  */
 @Component
-@ConfigurationProperties(prefix = "mqtt")
+@ConditionalOnExpression("'${mqtt.enabled}'=='true'")
 @Slf4j
 public class MqttServer {
 	@Value("${mqtt.bind_address}")
 	private String host;
 	@Value("${mqtt.bind_port}")
 	private Integer port;
+
+	@Value("${mqtt.ssl.enabled}")
+	private boolean sslEnabled;
+
+	@Value("${mqtt.ssl.bind_address}")
+	private String sslHost;
+
+	@Value("${mqtt.ssl.bind_port}")
+	private Integer sslPort;
 
 	@Value("${mqtt.netty.leak_detector_level}")
 	private String leakDetectorLevel;
@@ -43,10 +44,15 @@ public class MqttServer {
 	@Value("${mqtt.netty.max_payload_size}")
 	private Integer maxPayloadSize;
 
+	@Value("${mqtt.netty.so_keep_alive}")
+	private boolean keepAlive;
+
 	@Resource
-	private ProtocolProcess protocolProcess;
+	private MqttTransportContext context;
 
 	private Channel serverChannel;
+
+	private Channel sslServerChannel;
 	private EventLoopGroup bossGroup;
 	private EventLoopGroup workerGroup;
 
@@ -57,25 +63,25 @@ public class MqttServer {
 		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.valueOf(leakDetectorLevel.toUpperCase()));
 		log.info("Starting MQTT transport...");
 
-		log.info("Starting MQTT transport server");
 		bossGroup = new NioEventLoopGroup(bossGroupThreadCount);
 		workerGroup = new NioEventLoopGroup(workerGroupThreadCount);
 		ServerBootstrap b = new ServerBootstrap();
 		b.group(bossGroup, workerGroup)
 				.channel(NioServerSocketChannel.class)
-				.childHandler(new ChannelInitializer<SocketChannel>() {
-					@Override
-					protected void initChannel(SocketChannel socketChannel) throws Exception {
-						ChannelPipeline pipeline = socketChannel.pipeline();
-						pipeline.addLast("idle", new MqttIdleStateHandler());
-						pipeline.addLast("decoder", new MqttDecoder(maxPayloadSize));
-						pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-						MqttTransportHandler handler = new MqttTransportHandler(protocolProcess);
-						pipeline.addLast(handler);
-					}
-				});
+				.childHandler(new MqttTransportServerInitializer(context, false))
+				.childOption(ChannelOption.SO_KEEPALIVE, keepAlive);
 
 		serverChannel = b.bind(host, port).sync().channel();
+		log.info("Mqtt started on {}", port);
+		if (sslEnabled) {
+			b = new ServerBootstrap();
+			b.group(bossGroup, workerGroup)
+					.channel(NioServerSocketChannel.class)
+					.childHandler(new MqttTransportServerInitializer(context, true))
+					.childOption(ChannelOption.SO_KEEPALIVE, keepAlive);
+			sslServerChannel = b.bind(sslHost, sslPort).sync().channel();
+			log.info("Mqtt TLS/SSL started on {}", sslPort);
+		}
 		log.info("Mqtt transport started!");
 	}
 
@@ -84,6 +90,9 @@ public class MqttServer {
 		log.info("Stopping MQTT transport!");
 		try {
 			serverChannel.close().sync();
+			if (sslEnabled) {
+				sslServerChannel.close().sync();
+			}
 		} finally {
 			workerGroup.shutdownGracefully();
 			bossGroup.shutdownGracefully();

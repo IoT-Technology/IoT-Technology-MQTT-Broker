@@ -1,4 +1,4 @@
-package iot.technology.mqtt.storage.session.cache;
+package iot.technology.mqtt.storage.cache;
 
 import java.util.List;
 import java.util.Map;
@@ -85,6 +85,25 @@ public interface CacheManager {
 	 * @return 字典键值集合
 	 */
 	Map<String, Object> getAllHashCache(String key);
+
+	/**
+	 * 检查某字典是否包含该字典键
+	 *
+	 * @param key    键
+	 * @param mapKey 字典键
+	 * @return
+	 */
+	Boolean containHashKey(String key, String mapKey);
+
+
+	/**
+	 * 删除某字典某字典键
+	 *
+	 * @param key    键
+	 * @param mapKey 字典键
+	 * @return
+	 */
+	Boolean removeHashKey(String key, String mapKey);
 	//******hash(字典) 操作 end
 
 
@@ -116,6 +135,9 @@ public interface CacheManager {
 	 * @return true/false
 	 */
 	Boolean existsSetCache(String key, Object value);
+
+
+	Boolean removeSetCache(String key, Object value);
 
 	/**
 	 * 批量获取set列表

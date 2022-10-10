@@ -1,4 +1,4 @@
-package iot.technology.mqtt.storage.session.cache;
+package iot.technology.mqtt.storage.cache;
 
 import org.redisson.api.*;
 import org.springframework.stereotype.Service;
@@ -77,6 +77,19 @@ public class RedissonClientService implements CacheManager {
 	}
 
 	@Override
+	public Boolean containHashKey(String key, String mapKey) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		return cache.containsKey(mapKey);
+	}
+
+	@Override
+	public Boolean removeHashKey(String key, String mapKey) {
+		RMap<String, Object> cache = redissonClient.getMap(key);
+		cache.remove(mapKey);
+		return Boolean.TRUE;
+	}
+
+	@Override
 	public Boolean addSetCache(String key, Object value) {
 		RSet<Object> cache = redissonClient.getSet(key);
 		cache.add(value);
@@ -93,6 +106,12 @@ public class RedissonClientService implements CacheManager {
 	public Boolean existsSetCache(String key, Object value) {
 		RSet<Object> cache = redissonClient.getSet(key);
 		return cache.contains(value);
+	}
+
+	@Override
+	public Boolean removeSetCache(String key, Object value) {
+		RSet<Object> cache = redissonClient.getSet(key);
+		return cache.remove(value);
 	}
 
 	@Override
