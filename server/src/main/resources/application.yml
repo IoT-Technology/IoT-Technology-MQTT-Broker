@@ -47,8 +47,6 @@ mqtt:
         key_alias:
         # Optional password to access the private key, If not set, the platform will attempt to load the private keys that are not protected with the password;
         key_password: server_key_password
-    # Skip certificate validity check for client certificates.
-    skip_validity_check_for_client_cert: false
 
 
 spring:
